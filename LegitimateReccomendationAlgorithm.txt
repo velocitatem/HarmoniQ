@@ -1,0 +1,10 @@
+songs[];
+songGenres[];
+
+foreach(song){
+  if(song){
+    songGenres[song.genre]++;
+  }
+}
+
+return max(songGenres);
