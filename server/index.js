@@ -7,6 +7,8 @@ app.use(express.json());
 const client = new MongoClient(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 var Spotify = require('spotify-web-api-js');
 const axios = require('axios');
+const domain = process.env.DOMAIN || 'http://localhost:3000';
+
 
 const routes = [
     {
@@ -15,7 +17,7 @@ const routes = [
         handler: async (request, res) => {
             const client_id = process.env.CLIENT_ID;
             const { event } = request.query;
-            const redirect_uri = "http://localhost:3000/spotify/auth/callback/"+event;
+            const redirect_uri = domain+"/spotify/auth/callback/"+event;
             let scopes = [
                 'user-read-private',
                 'user-read-email',
@@ -44,7 +46,7 @@ const routes = [
                 params: {
                     grant_type: 'authorization_code',
                     code,
-                    redirect_uri: 'http://localhost:3000/spotify/auth/callback/' + event
+                    redirect_uri: domain+'/spotify/auth/callback/' + event
                 },
                 method: 'POST'
             });
@@ -98,7 +100,7 @@ const init = async () => {
             app[route.method.toLowerCase()](route.path, route.handler);
         });
         app.listen(port, () => {
-            console.log(`Server running at http://localhost:${port}`);
+            console.log(`Server running at ${domain}:${port}`);
         });
     } catch (err) {
         console.log(err);
