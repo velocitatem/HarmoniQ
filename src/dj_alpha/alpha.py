@@ -49,6 +49,11 @@ Would you like to go into more detail on any of these steps?
 import spotipy as spotify
 import os
 from dotenv import load_dotenv
+import librosa
+import librosa.display
+import numpy as np
+## requrements.txt
+
 # get client ID and SECRET from .env
 load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
@@ -68,18 +73,20 @@ def get_track_analysis(track_id):
     track_analysis = sp.audio_analysis(track_id)
     return track_analysis
 
-def plot_loudness(track_analysis, plt):
+def get_track_information(track_id):
     """
-    Plot loudness
+    Get track information
     """
-    # plot loudness for each segment
-    X = []
-    Y = []
-    for segment in track_analysis["segments"]:
-        X.append(segment["start"])
-        Y.append(segment["loudness_max"])
-    plt.plot(X, Y)
-    # plt.show()
+    # get track analysis
+    track_information = sp.track(track_id)
+    return track_information
+
+def download_track(track_id):
+    """
+    use the CLI to download a track
+    """
+    res=os.system(f"spotify_dl -l https://open.spotify.com/track/{track_id}")
+    return res
 
 
 
@@ -87,36 +94,34 @@ def plot_loudness(track_analysis, plt):
 def main():
     # compare two songs
     # original: https://open.spotify.com/track/2Y0iGXY6m6immVb2ktbseM?si=6fc4c4acc5224a2a
-    # remix: https://open.spotify.com/track/4uUG5RXrOk84mYEfFvj3cK?si=354cae421c3e4d67
     # get track analysis
-    import matplotlib.pyplot as plt
-    track_analysis = get_track_analysis("2Y0iGXY6m6immVb2ktbseM")
-    track_analysis2 = get_track_analysis("4uUG5RXrOk84mYEfFvj3cK")
-    # plot loudness
-    plot_loudness(track_analysis, plt)
-    plot_loudness(track_analysis2, plt)
-
-    # find overlapping segments
-    # find segments with similar loudness
-    overlaps = []
-    for segment in track_analysis["segments"]:
-        for segment2 in track_analysis2["segments"]:
-            if segment["loudness_max"] == segment2["loudness_max"]:
-                overlaps.append(segment)
-                overlaps.append(segment2)
-    print(overlaps)
-    # highlight overlapping segments
-    for segment in overlaps:
-        plt.axvspan(segment["start"], segment["start"] + segment["duration"], color='red', alpha=0.5)
-    plt.show()
+    # track_analysis = get_track_analysis("2Y0iGXY6m6immVb2ktbseM")
+    # download_track("2Y0iGXY6m6immVb2ktbseM")
+    # assuming its already downloaded
+    fileName = "/home/velocitatem/Music/MGMT - Little Dark Age.wav"
+    # convert to wav
 
 
+    # load the audio
+    y, sr = librosa.load(fileName)
+    # get the tempo
+    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
+    # get the beat frames
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr)
 
+    print(f"Estimated tempo: {tempo}")
+    print(f"Beat frames: {beat_frames}")
 
+    # generate a new baseline track
+    baseLine = np.zeros_like(y)
+    # get the beat frames
+    for beat in beat_frames:
+        baseLine[beat] = 1
 
-
-
-
+    # get the chroma for the beats
+    chromagram = librosa.feature.chroma_cqt(y=y, sr=sr)
+    chroma_beats = chromagram[:, beat_frames]
+    chroma_beats_times = librosa.frames_to_time(np.arange(len(chroma_beats.T)), sr=sr)
 
 
 
