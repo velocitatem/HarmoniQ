@@ -9,15 +9,23 @@ const event = 'extraqueso'
 // get all the users
 const getUsers = async () => {
     try {
-        await client.connect();
+        if (client) {
+            await client.close();
+        }
+        try {
+            await client.connect();
+        } catch (error) {
+            console.log(error);
+        }
+
         const db = client.db('harmoniQ');
         const users = db.collection('users');
         let data = await users.find({ 'event': event
                                     }).toArray();
-        client.close();
         // there might be duplicates of users, so we filter them out by getting the latest one by signupDate
         data = data.sort((a, b) => new Date(b.signupDate) - new Date(a.signupDate)); // sort by signupDate
         // filter out duplicates
+        client.close();
         const seen = new Set();
         data = data.filter(user => {
             const duplicate = seen.has(user.id);
